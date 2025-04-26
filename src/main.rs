@@ -10,6 +10,12 @@ struct CPU {
 }
 
 impl CPU {
+  //nnn or addr - A 12-bit value, the lowest 12 bits of the instruction
+  //n or nibble - A 4-bit value, the lowest 4 bits of the instruction
+  //x - A 4-bit value, the lower 4 bits of the high byte of the instruction
+  //y - A 4-bit value, the upper 4 bits of the low byte of the instruction
+  //kk or byte - An 8-bit value, the lowest 8 bits of the instruction
+
   fn read_opcode(&self) -> u16 {
     let p = self.position_in_memory;
     // Why u16? When we shift below, we would just zero
@@ -39,6 +45,7 @@ impl CPU {
           return;
         }
         (0, 0, 0xE, 0xE) => self.ret(),
+        (0x1, _, _, _) => self.jmp(nnn), //TODO is this into correct?
         (0x2, _, _, _) => self.call(nnn), //TODO is this into correct?
         (0x8, _, _, 0x4) => self.add_xy(x, y),
         _ => todo!("opcode {:04x}", opcode),
@@ -57,6 +64,10 @@ impl CPU {
     } else {
       self.registers[0xF] = 0;
     }
+  }
+
+  fn jmp(&mut self, addr: u16) {
+    self.position_in_memory = addr as usize;
   }
 
   fn call(&mut self, addr: u16) {
