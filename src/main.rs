@@ -232,6 +232,7 @@ use std::str::FromStr; // Needed for parse::<T>()
 #[derive(Debug)]
 struct Instruction {
   mnemonic: String,
+  location: u16,
   operand1: Option<Operand>,
   operand2: Option<Operand>,
 }
@@ -278,6 +279,7 @@ fn parse_address(addr_str: &str) -> Result<u16, String> {
 // --- Main function to process the parse tree ---
 
 fn process_parse_tree(pairs: Pairs<Rule>) -> Result<Vec<Instruction>, String> {
+  let mut location: u16 = 0;
   let mut instructions: Vec<Instruction> = Vec::new();
 
   // Get the single top-level Pair for the PROGRAM rule
@@ -345,6 +347,7 @@ fn process_parse_tree(pairs: Pairs<Rule>) -> Result<Vec<Instruction>, String> {
         let reg2 = parse_register(parts[2])?;
         Instruction {
           mnemonic,
+          location,
           operand1: Some(Operand::Register(reg1)),
           operand2: Some(Operand::Register(reg2)),
         }
@@ -364,6 +367,7 @@ fn process_parse_tree(pairs: Pairs<Rule>) -> Result<Vec<Instruction>, String> {
         let immediate = parse_number(parts[2])?;
         Instruction {
           mnemonic,
+          location,
           operand1: Some(Operand::Register(reg)),
           operand2: Some(Operand::Immediate(immediate)),
         }
@@ -382,6 +386,7 @@ fn process_parse_tree(pairs: Pairs<Rule>) -> Result<Vec<Instruction>, String> {
         let address = parse_address(parts[1])?;
         Instruction {
           mnemonic,
+          location,
           operand1: Some(Operand::Address(address)),
           operand2: None, // JMP usually has only one operand
         }
@@ -394,6 +399,7 @@ fn process_parse_tree(pairs: Pairs<Rule>) -> Result<Vec<Instruction>, String> {
         ));
       }
     };
+    location += 2;
     instructions.push(instruction);
   }
 
