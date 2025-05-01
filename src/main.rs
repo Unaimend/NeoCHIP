@@ -14,6 +14,7 @@ struct CPU {
   // If position_in_memory is > 0x1000 we have a problem.
   position_in_memory: usize,
   registers: [u8; 16],
+  register_i: u16,
   // We do not reserer 512 bytes for the system
   memory: [u8; 0x1000],
   stack: [u16; 16],
@@ -71,11 +72,13 @@ impl CPU {
       (0x8, _, _, 0x4) => self.add_xy(x, y),
       (0x8, _, _, 0x5) => self.subs_xy(x, y),
       (0x9, _, _, _) => self.skip_reg_not_equal(x, y),
-      //(0xA, _, _, _) => todo!("Implement A"),
+      (0xA, _, _, _) => self.set_register_i(nnn),
       //(0xB, _, _, _) => todo!("Implement B"),
       //(0xC, _, _, _) => todo!("Implement rand"),
       //(0xD, _, _, _) => todo!("Implement display"),
       //(0xE, _, _, _) => todo!("Implement keyboard"),
+      (0xF, _, 0x5, 0x5) => self.store_regs(x),
+      (0xF, _, 0x6, 0x5) => self.load_regs(x),
       _ => todo!("opcode {:04x}", opcode),
     }
     return 1;
@@ -148,6 +151,36 @@ impl CPU {
   fn store_y_in_x(&mut self, x: u8, y: u8) {
     self.registers[x as usize] = self.registers[y as usize];
   }
+  
+  fn set_register_i(&mut self, nnn: u16) {
+    self.register_i = nnn;
+  }
+
+  fn store_regs(&mut self, x: u8) {
+    let mut start_loc = self.register_i;
+
+    for reg in 0..x + 1 {
+      match self.registers.get(reg as usize) {
+        Some(val) => self.memory[(start_loc) as usize] = *val,
+        None => panic!("Register not found"),
+      }
+      start_loc += 1;
+    }
+  }
+
+
+  fn load_regs(&mut self, x: u8) {
+    let mut start_loc = self.register_i;
+
+    for reg in 0..x + 1 {
+      match self.registers.get_mut(reg as usize) {
+        Some(val) => { *val = self.memory[(start_loc) as usize]; }
+        None => panic!("Register not found"),
+      }
+      start_loc += 1;
+    }
+  }
+
 
   fn jmp(&mut self, addr: u16) {
     self.position_in_memory = addr as usize;
@@ -724,6 +757,7 @@ mod tests {
   fn test_program_no_skip_and_jump() {
     let mut cpu = CPU {
       registers: [0; 16],
+      register_i: 0,
       memory: [0; 4096],
       position_in_memory: 0x200, // Standard program start address
       stack: [0; 16],
