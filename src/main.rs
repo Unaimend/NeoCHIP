@@ -6,7 +6,7 @@ use pest_derive::Parser;
 #[grammar = "assembler.pest"]
 pub struct AssemblerParser;
 
-use pest::iterators::{Pair, Pairs};
+use pest::iterators::Pairs;
 use std::str::FromStr; // Needed for parse::<T>()
                        //
                        //
@@ -43,13 +43,12 @@ enum Operand {
 fn parse_register(reg_str: &str) -> Result<u8, String> {
   if !reg_str.starts_with('R') {
     return Err(format!(
-      "Invalid register format: must start with 'R', got '{}'",
-      reg_str
+      "Invalid register format: must start with 'R', got '{reg_str}'"
     ));
   }
   reg_str[1..]
     .parse::<u8>() // Parse the number part after 'R'
-    .map_err(|e| format!("Invalid register number '{}': {}", reg_str, e))
+    .map_err(|e| format!("Invalid register number '{reg_str}': {e}"))
 }
 
 // Parses a number string (assuming decimal for simplicity, needs extension for hex)
@@ -58,7 +57,7 @@ fn parse_number(num_str: &str) -> Result<i32, String> {
   // This simple parse handles decimal signed integers.
   // You would need to add logic here to handle hexadecimal if allowed by your 'number' rule
   // (e.g., check for "0x" prefix and parse accordingly).
-  i32::from_str(num_str).map_err(|e| format!("Invalid number format '{}': {}", num_str, e))
+  i32::from_str(num_str).map_err(|e| format!("Invalid number format '{num_str}': {e}"))
 }
 
 // Parses an address string (assuming decimal for simplicity, needs extension for hex)
@@ -66,7 +65,7 @@ fn parse_address(addr_str: &str) -> Result<u16, String> {
   // Your 'address' rule defines the valid range 0-4096 and patterns.
   // This simple parse handles decimal.
   // You would need to add logic here to handle hexadecimal addresses like 0x008 if allowed.
-  u16::from_str(addr_str).map_err(|e| format!("Invalid address format '{}': {}", addr_str, e))
+  u16::from_str(addr_str).map_err(|e| format!("Invalid address format '{addr_str}': {e}"))
 }
 
 // --- Main function to process the parse tree ---
@@ -131,8 +130,7 @@ fn process_parse_tree(pairs: Pairs<Rule>) -> Result<Vec<Instruction>, String> {
         let parts: Vec<&str> = statement_str.split_whitespace().collect();
         if parts.len() != 3 {
           return Err(format!(
-            "Invalid STMT_REG format string: Expected 3 parts, got '{}'",
-            statement_str
+            "Invalid STMT_REG format string: Expected 3 parts, got '{statement_str}'"
           ));
         }
         let mnemonic = parts[0].to_string();
@@ -151,8 +149,7 @@ fn process_parse_tree(pairs: Pairs<Rule>) -> Result<Vec<Instruction>, String> {
         let parts: Vec<&str> = statement_str.split_whitespace().collect();
         if parts.len() != 3 {
           return Err(format!(
-            "Invalid STMT_IM format string: Expected 3 parts, got '{}'",
-            statement_str
+            "Invalid STMT_IM format string: Expected 3 parts, got '{statement_str}'"
           ));
         }
         let mnemonic = parts[0].to_string();
@@ -171,8 +168,7 @@ fn process_parse_tree(pairs: Pairs<Rule>) -> Result<Vec<Instruction>, String> {
         let parts: Vec<&str> = statement_str.split_whitespace().collect();
         if parts.len() != 2 {
           return Err(format!(
-            "Invalid STMT_ADDR format string: Expected 2 parts, got '{}'",
-            statement_str
+            "Invalid STMT_ADDR format string: Expected 2 parts, got '{statement_str}'"
           ));
         }
         let mnemonic = parts[0].to_string();
@@ -190,8 +186,7 @@ fn process_parse_tree(pairs: Pairs<Rule>) -> Result<Vec<Instruction>, String> {
         let parts: Vec<&str> = statement_str.split_whitespace().collect();
         if parts.len() != 2 {
           return Err(format!(
-            "Invalid STMT_ADDR format string: Expected 2 parts, got '{}'",
-            statement_str
+            "Invalid STMT_ADDR format string: Expected 2 parts, got '{statement_str}'"
           ));
         }
         let mnemonic = parts[0].to_string();
@@ -208,12 +203,11 @@ fn process_parse_tree(pairs: Pairs<Rule>) -> Result<Vec<Instruction>, String> {
         let parts: Vec<&str> = statement_str.split_whitespace().collect();
         if parts.len() != 1 {
           return Err(format!(
-            "Invalid LABEL format string: Expected 1 part, got '{}'",
-            statement_str
+            "Invalid LABEL format string: Expected 1 part, got '{statement_str}'"
           ));
         }
         let mnemonic = parts[0].to_string();
-        println!("label: {}", mnemonic);
+        println!("label: {mnemonic}");
         // This does not get translated into byte code
         location -= 2;
         Instruction {
@@ -262,16 +256,16 @@ JMP loop
         Ok(instructions) => {
           println!("Successfully extracted instructions:");
           for instr in instructions {
-            println!("{:?}", instr);
+            println!("{instr:?}");
           }
         }
         Err(e) => {
-          eprintln!("Error processing parse tree: {}", e);
+          eprintln!("Error processing parse tree: {e}");
         }
       }
     }
     Err(e) => {
-      eprintln!("Parse error: {}", e);
+      eprintln!("Parse error: {e}");
     }
   }
   //println!("{:?}",AssemblerParser::parse(Rule::number, "255"));

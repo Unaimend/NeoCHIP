@@ -1,6 +1,6 @@
 // [1] http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#8xy5
 use std::fs::File;
-use std::io::{self, Read};
+use std::io::Read;
 use std::path::Path;
 
 
@@ -9,8 +9,8 @@ fn main() {
   let display = path.display();
 
   // Open the path in read-only mode, returns `io::Result<File>`
-  let mut file = match File::open(&path) {
-      Err(why) => panic!("couldn't open {}: {}", display, why),
+  let mut file = match File::open(path) {
+      Err(why) => panic!("couldn't open {display}: {why}"),
       Ok(file) => file,
   };
 
@@ -66,7 +66,7 @@ impl CPU {
     let c = ((opcode & 0xF000) >> 12) as u8;
     let x = ((opcode & 0x0F00) >> 8) as u8;
     let y = ((opcode & 0x00F0) >> 4) as u8;
-    let d = ((opcode & 0x000F) >> 0) as u8;
+    let d = ((opcode & 0x000F)) as u8;
     let nnn = opcode & 0x0FFF;
     // The the lower byte
     let kk = (opcode & 0x00FF) as u8;
@@ -98,7 +98,7 @@ impl CPU {
       (0xF, _, 0x6, 0x5) => self.load_regs(x),
       _ => todo!("opcode {:04x}", opcode),
     }
-    return 1;
+    1
   }
 
   fn run(&mut self) {
@@ -284,7 +284,7 @@ mod tests {
       stack_pointer: 0,
     };
 
-    let mut program: [u8; 6] = [
+    let program: [u8; 6] = [
       // Main program (starts at 0x200)
       0x61, 0x01, // 0x200: LD V0, 0x01
       0x60, 0x02, // 0x202: LD V1, 0x02
@@ -457,7 +457,7 @@ mod tests {
 
     // Verify other registers remain at their default (0)
     for i in 6..15 {
-      assert_eq!(cpu.registers[i], 0, "V{} should be 0", i);
+      assert_eq!(cpu.registers[i], 0, "V{i} should be 0");
     }
   }
 
@@ -533,7 +533,7 @@ mod tests {
 
     // Verify other registers remain at their default (0)
     for i in 6..15 {
-      assert_eq!(cpu.registers[i], 0, "V{} should be 0", i);
+      assert_eq!(cpu.registers[i], 0, "V{i} should be 0");
     }
   }
 }
