@@ -242,6 +242,7 @@ enum Operand {
   Register(u8),
   Immediate(i32), // Use i32 for potentially signed numbers from your 'number' rule
   Address(u16),
+  Label(String),
 }
 
 // --- Helper functions to parse operand strings ---
@@ -391,6 +392,45 @@ fn process_parse_tree(pairs: Pairs<Rule>) -> Result<Vec<Instruction>, String> {
           operand2: None, // JMP usually has only one operand
         }
       }
+      Rule::STMT_LABEL => {
+        // Format: ("JMP") WHITESPACE address EOL
+        // Example string: "JMP 8" or "JMP 1024"
+        let parts: Vec<&str> = statement_str.split_whitespace().collect();
+        if parts.len() != 2 {
+          return Err(format!(
+            "Invalid STMT_ADDR format string: Expected 2 parts, got '{}'",
+            statement_str
+          ));
+        }
+        let mnemonic = parts[0].to_string();
+        Instruction {
+          mnemonic,
+          location,
+          operand1: Some(Operand::Label(parts[1].to_string())),
+          operand2: None, // JMP usually has only one operand
+        }
+      }
+      Rule::LABEL_DEC => {
+        // Format: ASCII_ALPHA: EOL
+        // Example loop:
+        let parts: Vec<&str> = statement_str.split_whitespace().collect();
+        if parts.len() != 1 {
+          return Err(format!(
+            "Invalid LABEL format string: Expected 1 part, got '{}'",
+            statement_str
+          ));
+        }
+        let mnemonic = parts[0].to_string();
+        println!("label: {}", mnemonic);
+        // This does not get translated into byte code
+        location -= 2;
+        Instruction {
+          mnemonic,
+          location,
+          operand1: None,
+          operand2: None, // JMP usually has only one operand
+        }
+      }
       _ => {
         // This case should theoretically not be reached if STMT only alternates the above
         return Err(format!(
@@ -412,11 +452,12 @@ LOAD R1 1
 LOAD R5 5
 LOAD R6 1
 SUB R5 R6
+loop:
 LOAD R3 R0
 ADD R0 R1
 LOAD R1 R3
 STYX R5 R1
-JMP 8
+JMP loop
     "#;
 
   let parse_result = AssemblerParser::parse(Rule::PROGRAM, fibonacci_program_no_comments_asm);
@@ -464,6 +505,9 @@ JMP 8
   //println!("{:?}", AssemblerParser::parse(Rule::STMT, "LOAD R10 R8\nSTO R10 R8\n"));
   //println!("{:?}", AssemblerParser::parse(Rule::PROGRAM, "LOAD R10 R8\nSTO R10 R8\n"));
   //println!("{:?}", AssemblerParser::parse(Rule::PROGRAM, fibonacci_program_no_comments_asm));
+  //println!("{:?}", AssemblerParser::parse(Rule::LABEL_DEC, "loop:\n"));
+  //println!("{:?}", AssemblerParser::parse(Rule::STMT_ADDR, "JMP 8\n"));
+  //println!("{:?}", AssemblerParser::parse(Rule::STMT_ADDR, "JMP loop\n"));
 
   //let path = Path::new("hello.bin");
   //let display = path.display();
