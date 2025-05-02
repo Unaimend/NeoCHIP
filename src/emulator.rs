@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
-
+#[allow(unused)]
 fn main() { 
   let path = Path::new("hello.bin");
   let display = path.display();

@@ -15,4 +15,4 @@ path = "src/emulator.rs"
 
 [[bin]]
 name = "parser"
-path = "src/main.rs"
+path = "src/parser.rs"
