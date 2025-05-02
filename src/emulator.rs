@@ -4,14 +4,14 @@ use std::io::Read;
 use std::path::Path;
 
 #[allow(unused)]
-fn main() { 
+fn main() {
   let path = Path::new("hello.bin");
   let display = path.display();
 
   // Open the path in read-only mode, returns `io::Result<File>`
   let mut file = match File::open(path) {
-      Err(why) => panic!("couldn't open {display}: {why}"),
-      Ok(file) => file,
+    Err(why) => panic!("couldn't open {display}: {why}"),
+    Ok(file) => file,
   };
 
   let mut cpu = CPU {
@@ -66,7 +66,7 @@ impl CPU {
     let c = ((opcode & 0xF000) >> 12) as u8;
     let x = ((opcode & 0x0F00) >> 8) as u8;
     let y = ((opcode & 0x00F0) >> 4) as u8;
-    let d = ((opcode & 0x000F)) as u8;
+    let d = (opcode & 0x000F) as u8;
     let nnn = opcode & 0x0FFF;
     // The the lower byte
     let kk = (opcode & 0x00FF) as u8;
@@ -168,7 +168,7 @@ impl CPU {
   fn store_y_in_x(&mut self, x: u8, y: u8) {
     self.registers[x as usize] = self.registers[y as usize];
   }
-  
+
   fn set_register_i(&mut self, nnn: u16) {
     self.register_i = nnn;
   }
@@ -185,19 +185,19 @@ impl CPU {
     }
   }
 
-
   fn load_regs(&mut self, x: u8) {
     let mut start_loc = self.register_i;
 
     for reg in 0..x + 1 {
       match self.registers.get_mut(reg as usize) {
-        Some(val) => { *val = self.memory[(start_loc) as usize]; }
+        Some(val) => {
+          *val = self.memory[(start_loc) as usize];
+        }
         None => panic!("Register not found"),
       }
       start_loc += 1;
     }
   }
-
 
   fn jmp(&mut self, addr: u16) {
     self.position_in_memory = addr as usize;
