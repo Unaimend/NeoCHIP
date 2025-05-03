@@ -1,6 +1,6 @@
 
 REGISTER = @{ "R" ~ ( "1" ~ '0'..'5' | '0'..'9' ) }
-REGISTER_KEYWORD = {"STO" | "LOAD" | "ADD" | "SUB" | "STYX"}
+REGISTER_KEYWORD = {"LOAD" | "ADD" | "SUB" | "STYX"}
 
 PROGRAM = {(STMT)+}
 

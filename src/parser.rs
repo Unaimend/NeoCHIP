@@ -264,53 +264,6 @@ JMP loop
       eprintln!("Parse error: {e}");
     }
   }
-  //println!("{:?}",AssemblerParser::parse(Rule::number, "255"));
-  //println!("{:?}",AssemblerParser::parse(Rule::STMT_REG, "STO R1 R2\r\n"));
-  //println!("{:?}",AssemblerParser::parse(Rule::STMT_REG, "STO R1 R2\r\n"));
-  //println!("{:?}",AssemblerParser::parse(Rule::STMT, "LOAD R1 R2\n"));
-  //println!("{:?}",AssemblerParser::parse(Rule::STMT, "LOAD R3 R2\n"));
-  //println!("{:?}",AssemblerParser::parse(Rule::STMT, "LOAD R9 R8\n"));
-  //println!("{:?}", AssemblerParser::parse(Rule::REGISTER, "R8"));
-  //println!("{:?}", AssemblerParser::parse(Rule::REGISTER, "R10"));
-  //println!("{:?}", AssemblerParser::parse(Rule::STMT, "STO R10 R8\n"));
-  //println!("{:?}", AssemblerParser::parse(Rule::STMT, "STO R10 R8\n"));
-  //println!("{:?}", AssemblerParser::parse(Rule::STMT, "LOAD R10 R8\n"));
-  //println!("{:?}", AssemblerParser::parse(Rule::STMT, "STYX R10 R8\n"));
-  //println!("{:?}", AssemblerParser::parse(Rule::STMT_IM, "LOAD R10 10\n"));
-  //println!("{:?}", AssemblerParser::parse(Rule::STMT_IM, "LOAD R10 8\n"));
-  //println!("{:?}", AssemblerParser::parse(Rule::STMT_IM, "CMP R10 8\n"));
-  //println!("{:?}", AssemblerParser::parse(Rule::STMT, "CMP R10 8\n"));
-  //println!("{:?}", AssemblerParser::parse(Rule::STMT, "ADD R10 R8\n"));
-  //println!("{:?}", AssemblerParser::parse(Rule::STMT_ADDR, "JMP 1024\n"));
-  //println!("{:?}", AssemblerParser::parse(Rule::STMT, "JMP 1024\n"));
-  //println!("{:?}", AssemblerParser::parse(Rule::STMT, fibonacci_program_no_comments_asm));
-  //println!("{:?}", AssemblerParser::parse(Rule::STMT, "LOAD R10 R8\nSTO R10 R8\n"));
-  //println!("{:?}", AssemblerParser::parse(Rule::PROGRAM, "LOAD R10 R8\nSTO R10 R8\n"));
-  //println!("{:?}", AssemblerParser::parse(Rule::PROGRAM, fibonacci_program_no_comments_asm));
-  //println!("{:?}", AssemblerParser::parse(Rule::LABEL_DEC, "loop:\n"));
-  //println!("{:?}", AssemblerParser::parse(Rule::STMT_ADDR, "JMP 8\n"));
-  //println!("{:?}", AssemblerParser::parse(Rule::STMT_ADDR, "JMP loop\n"));
-
-  //let path = Path::new("hello.bin");
-  //let display = path.display();
-
-  //// Open the path in read-only mode, returns `io::Result<File>`
-  //let mut file = match File::open(&path) {
-  //    Err(why) => panic!("couldn't open {}: {}", display, why),
-  //    Ok(file) => file,
-  //};
-
-  //let mut cpu = CPU {
-  //  registers: [0; 16],
-  //  memory: [0; 4096],
-  //  position_in_memory: 0,
-  //  stack: [0; 16],
-  //  stack_pointer: 0,
-  //};
-
-  //file.read(&mut cpu.memory).expect("Error reading file");
-
-  //println!("{:?}", cpu.memory);
 }
 
 #[cfg(test)]
@@ -345,5 +298,318 @@ mod tests {
   fn bigger_than_255() {
     let _p = AssemblerParser::parse(Rule::number, "256").expect("Parse failed");
     panic!();
+  }
+
+  #[test]
+  fn adress_works() {
+    let p = AssemblerParser::parse(Rule::address, "256").expect("Parse failed");
+    assert_eq!(p.as_str(), "256");
+  }
+
+  #[test]
+  fn adress_4096_works() {
+    let p = AssemblerParser::parse(Rule::address, "4096").expect("Parse failed");
+    assert_eq!(p.as_str(), "4096");
+  }
+
+  #[test]
+  fn adress_0_works() {
+    let p = AssemblerParser::parse(Rule::address, "0").expect("Parse failed");
+    assert_eq!(p.as_str(), "0");
+  }
+
+  #[test]
+  #[should_panic]
+  fn adress_negative_one_crashes() {
+    let p = AssemblerParser::parse(Rule::address, "-1").expect("Parse failed");
+    assert_eq!(p.as_str(), "-1");
+  }
+
+  #[test]
+  fn test_whitespace_ignored() {
+    let p = AssemblerParser::parse(Rule::WHITESPACE, " ").expect("Parse failed");
+    assert_eq!(p.as_str(), "");
+  }
+
+  #[test]
+  fn test_tab_ignored() {
+    let p = AssemblerParser::parse(Rule::WHITESPACE, "\t").expect("Parse failed");
+    assert_eq!(p.as_str(), "");
+  }
+
+  #[test]
+  fn test_simple_newline_ignored() {
+    let p = AssemblerParser::parse(Rule::EOL, "\n").expect("Parse failed");
+    assert_eq!(p.as_str(), "\n");
+  }
+
+  #[test]
+  fn test_simple_complex_ignored() {
+    let p = AssemblerParser::parse(Rule::EOL, "\r\n").expect("Parse failed");
+    assert_eq!(p.as_str(), "\r\n");
+  }
+
+  #[test]
+  fn test_r0() {
+    let p = AssemblerParser::parse(Rule::REGISTER, "R0").expect("Parse failed");
+    assert_eq!(p.as_str(), "R0");
+  }
+
+  #[test]
+  fn test_r1() {
+    let p = AssemblerParser::parse(Rule::REGISTER, "R1").expect("Parse failed");
+    assert_eq!(p.as_str(), "R1");
+  }
+
+  #[test]
+  fn test_r2() {
+    let p = AssemblerParser::parse(Rule::REGISTER, "R2").expect("Parse failed");
+    assert_eq!(p.as_str(), "R2");
+  }
+
+  #[test]
+  fn test_r3() {
+    let p = AssemblerParser::parse(Rule::REGISTER, "R3").expect("Parse failed");
+    assert_eq!(p.as_str(), "R3");
+  }
+
+  #[test]
+  fn test_r4() {
+    let p = AssemblerParser::parse(Rule::REGISTER, "R4").expect("Parse failed");
+    assert_eq!(p.as_str(), "R4");
+  }
+
+  #[test]
+  fn test_r5() {
+    let p = AssemblerParser::parse(Rule::REGISTER, "R5").expect("Parse failed");
+    assert_eq!(p.as_str(), "R5");
+  }
+
+  #[test]
+  fn test_r6() {
+    let p = AssemblerParser::parse(Rule::REGISTER, "R6").expect("Parse failed");
+    assert_eq!(p.as_str(), "R6");
+  }
+
+  #[test]
+  fn test_r7() {
+    let p = AssemblerParser::parse(Rule::REGISTER, "R7").expect("Parse failed");
+    assert_eq!(p.as_str(), "R7");
+  }
+
+  #[test]
+  fn test_r8() {
+    let p = AssemblerParser::parse(Rule::REGISTER, "R8").expect("Parse failed");
+    assert_eq!(p.as_str(), "R8");
+  }
+
+  #[test]
+  fn test_r9() {
+    let p = AssemblerParser::parse(Rule::REGISTER, "R9").expect("Parse failed");
+    assert_eq!(p.as_str(), "R9");
+  }
+
+  #[test]
+  fn test_r10() {
+    let p = AssemblerParser::parse(Rule::REGISTER, "R10").expect("Parse failed");
+    assert_eq!(p.as_str(), "R10");
+  }
+
+  #[test]
+  fn test_r11() {
+    let p = AssemblerParser::parse(Rule::REGISTER, "R11").expect("Parse failed");
+    assert_eq!(p.as_str(), "R11");
+  }
+
+  #[test]
+  fn test_r12() {
+    let p = AssemblerParser::parse(Rule::REGISTER, "R12").expect("Parse failed");
+    assert_eq!(p.as_str(), "R12");
+  }
+
+  #[test]
+  fn test_r13() {
+    let p = AssemblerParser::parse(Rule::REGISTER, "R13").expect("Parse failed");
+    assert_eq!(p.as_str(), "R13");
+  }
+
+  #[test]
+  fn test_r14() {
+    let p = AssemblerParser::parse(Rule::REGISTER, "R14").expect("Parse failed");
+    assert_eq!(p.as_str(), "R14");
+  }
+
+  #[test]
+  fn test_r15() {
+    let p = AssemblerParser::parse(Rule::REGISTER, "R15").expect("Parse failed");
+    assert_eq!(p.as_str(), "R15");
+  }
+
+  #[test]
+  #[should_panic]
+  fn test_r16() {
+    let _p = AssemblerParser::parse(Rule::REGISTER, "R16").expect("Parse failed");
+    panic!();
+  }
+
+  //Thanks chad
+  macro_rules! test_keyword {
+    ($name:ident, $input:expr) => {
+      #[test]
+      fn $name() {
+        let p = AssemblerParser::parse(Rule::REGISTER_KEYWORD, $input).expect("Parse failed");
+        assert_eq!(p.as_str(), $input);
+      }
+    };
+  }
+
+  test_keyword!(test_load, "LOAD");
+  test_keyword!(test_add, "ADD");
+  test_keyword!(test_sub, "SUB");
+  test_keyword!(test_styx, "STYX");
+
+  /////// RANDOM TESTS/////////////
+  #[test]
+  fn test_stmt_reg_sto_r1_r2_crlf() {
+    let p = AssemblerParser::parse(Rule::STMT_REG, "STYX R1 R2\r\n").expect("Parse failed");
+    assert_eq!(p.as_str(), "STYX R1 R2\r\n");
+  }
+
+  #[test]
+  fn test_stmt_load_r1_r2() {
+    let p = AssemblerParser::parse(Rule::STMT, "LOAD R1 R2\n").expect("Parse failed");
+    assert_eq!(p.as_str(), "LOAD R1 R2\n");
+  }
+
+  #[test]
+  fn test_stmt_load_r3_r2() {
+    let p = AssemblerParser::parse(Rule::STMT, "LOAD R3 R2\n").expect("Parse failed");
+    assert_eq!(p.as_str(), "LOAD R3 R2\n");
+  }
+
+  #[test]
+  fn test_stmt_load_r9_r8() {
+    let p = AssemblerParser::parse(Rule::STMT, "LOAD R9 R8\n").expect("Parse failed");
+    assert_eq!(p.as_str(), "LOAD R9 R8\n");
+  }
+
+  #[test]
+  fn test_register_r8() {
+    let p = AssemblerParser::parse(Rule::REGISTER, "R8").expect("Parse failed");
+    assert_eq!(p.as_str(), "R8");
+  }
+
+  #[test]
+  fn test_register_r10() {
+    let p = AssemblerParser::parse(Rule::REGISTER, "R10").expect("Parse failed");
+    assert_eq!(p.as_str(), "R10");
+  }
+
+  #[test]
+  fn test_stmt_sto_r10_r8() {
+    let p = AssemblerParser::parse(Rule::STMT, "STYX R10 R8\n").expect("Parse failed");
+    assert_eq!(p.as_str(), "STYX R10 R8\n");
+  }
+
+  #[test]
+  fn test_stmt_load_r10_r8() {
+    let p = AssemblerParser::parse(Rule::STMT, "LOAD R10 R8\n").expect("Parse failed");
+    assert_eq!(p.as_str(), "LOAD R10 R8\n");
+  }
+
+  #[test]
+  fn test_stmt_styx_r10_r8() {
+    let p = AssemblerParser::parse(Rule::STMT, "STYX R10 R8\n").expect("Parse failed");
+    assert_eq!(p.as_str(), "STYX R10 R8\n");
+  }
+
+  #[test]
+  fn test_stmt_im_load_r10_10() {
+    let p = AssemblerParser::parse(Rule::STMT_IM, "LOAD R10 10\n").expect("Parse failed");
+    assert_eq!(p.as_str(), "LOAD R10 10\n");
+  }
+
+  #[test]
+  fn test_stmt_im_load_r10_8() {
+    let p = AssemblerParser::parse(Rule::STMT_IM, "LOAD R10 8\n").expect("Parse failed");
+    assert_eq!(p.as_str(), "LOAD R10 8\n");
+  }
+
+  #[test]
+  fn test_stmt_im_cmp_r10_8() {
+    let p = AssemblerParser::parse(Rule::STMT_IM, "CMP R10 8\n").expect("Parse failed");
+    assert_eq!(p.as_str(), "CMP R10 8\n");
+  }
+
+  #[test]
+  fn test_stmt_cmp_r10_8() {
+    let p = AssemblerParser::parse(Rule::STMT, "CMP R10 8\n").expect("Parse failed");
+    assert_eq!(p.as_str(), "CMP R10 8\n");
+  }
+
+  #[test]
+  fn test_stmt_add_r10_r8() {
+    let p = AssemblerParser::parse(Rule::STMT, "ADD R10 R8\n").expect("Parse failed");
+    assert_eq!(p.as_str(), "ADD R10 R8\n");
+  }
+
+  #[test]
+  fn test_stmt_addr_jmp_1024() {
+    let p = AssemblerParser::parse(Rule::STMT_ADDR, "JMP 1024\n").expect("Parse failed");
+    assert_eq!(p.as_str(), "JMP 1024\n");
+  }
+
+  #[test]
+  fn test_stmt_jmp_1024() {
+    let p = AssemblerParser::parse(Rule::STMT, "JMP 1024\n").expect("Parse failed");
+    assert_eq!(p.as_str(), "JMP 1024\n");
+  }
+
+  // Placeholder for external string
+  const FIB_PROG: &str = "LOAD R10 R8\nSTO R10 R8\n"; // Replace with actual `fibonacci_program_no_comments_asm`
+
+  #[test]
+  fn test_stmt_multiple() {
+    let p = AssemblerParser::parse(Rule::STMT, FIB_PROG).expect("Parse failed");
+    assert_eq!(p.as_str(), "LOAD R10 R8\n");
+  }
+
+  #[test]
+  fn test_label_dec_loop() {
+    let p = AssemblerParser::parse(Rule::LABEL_DEC, "loop:\n").expect("Parse failed");
+    assert_eq!(p.as_str(), "loop:\n");
+  }
+
+  #[test]
+  fn test_stmt_addr_jmp_8() {
+    let p = AssemblerParser::parse(Rule::STMT_ADDR, "JMP 8\n").expect("Parse failed");
+    assert_eq!(p.as_str(), "JMP 8\n");
+  }
+
+  #[test]
+  fn test_stmt_addr_jmp_loop() {
+    let p = AssemblerParser::parse(Rule::STMT_LABEL, "JMP loop\n").expect("Parse failed");
+    assert_eq!(p.as_str(), "JMP loop\n");
+  }
+
+  /////////////// COMPLEX TESTS /////////////////////
+  #[test]
+  fn test_program_fibonacci() {
+    let fibonacci_program_no_comments_asm = r#"LOAD R0 1
+LOAD R1 1
+LOAD R5 5
+LOAD R6 1
+SUB R5 R6
+loop:
+LOAD R3 R0
+ADD R0 R1
+LOAD R1 R3
+STYX R5 R1
+JMP loop
+"#;
+
+    let parse_result = AssemblerParser::parse(Rule::PROGRAM, fibonacci_program_no_comments_asm)
+      .expect("Parse failed");
+    assert_eq!(parse_result.as_str(), fibonacci_program_no_comments_asm);
   }
 }
