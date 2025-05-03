@@ -26,6 +26,9 @@ fn assemble(instructions: Vec<Instruction>) -> [u8; 4096] {
           mem[instr_ctr] = 0x60 | r1;
           mem[instr_ctr + 1] = i2;
         }
+        (Some(Operand::Register(r1)), Some(Operand::Register(r2))) => {
+          todo!("Needs to be removed")
+        }
         (_, _) => {}
       },
       Instruction {
@@ -77,5 +80,119 @@ JMP loop
     Err(e) => {
       eprintln!("Parse error: {e}");
     }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  fn zeroed_memory() -> [u8; 4096] {
+    [0u8; 4096]
+  }
+
+  #[test]
+  fn test_assemble_single_load_register_immediate() {
+    let instructions = vec![Instruction {
+      mnemonic: "LOAD".to_string(),
+      location: 0,
+      operand1: Some(Operand::Register(0)),
+      operand2: Some(Operand::Immediate(1)),
+    }];
+
+    let expected_bytes: [u8; 2] = [0x60, 0x01];
+
+    let memory = assemble(instructions);
+
+    assert_eq!(&memory[0..2], &expected_bytes);
+
+    assert_eq!(&memory[2..], &zeroed_memory()[2..]);
+  }
+
+  #[test]
+  fn test_assemble_multiple_load_register_immediate() {
+    let instructions = vec![
+      Instruction {
+        mnemonic: "LOAD".to_string(),
+        location: 0,
+        operand1: Some(Operand::Register(1)),
+        operand2: Some(Operand::Immediate(10)),
+      },
+      Instruction {
+        mnemonic: "LOAD".to_string(),
+        location: 2,
+        operand1: Some(Operand::Register(5)),
+        operand2: Some(Operand::Immediate(255)),
+      },
+    ];
+
+    let expected_bytes: [u8; 4] = [0x61, 0x0A, 0x65, 0xFF];
+
+    let memory = assemble(instructions);
+
+    assert_eq!(&memory[0..4], &expected_bytes);
+    assert_eq!(&memory[4..], &zeroed_memory()[4..]);
+  }
+
+  #[test]
+  fn test_assemble_load_register_immediate_edge_values() {
+    let instructions = vec![
+      Instruction {
+        mnemonic: "LOAD".to_string(),
+        location: 0,
+        operand1: Some(Operand::Register(0)),
+        operand2: Some(Operand::Immediate(0)),
+      },
+      Instruction {
+        mnemonic: "LOAD".to_string(),
+        location: 2,
+        operand1: Some(Operand::Register(15)),
+        operand2: Some(Operand::Immediate(255)),
+      },
+      Instruction {
+        mnemonic: "LOAD".to_string(),
+        location: 4,
+        operand1: Some(Operand::Register(7)),
+        operand2: Some(Operand::Immediate(1)),
+      },
+      Instruction {
+        mnemonic: "LOAD".to_string(),
+        location: 6,
+        operand1: Some(Operand::Register(8)),
+        operand2: Some(Operand::Immediate(254)),
+      },
+    ];
+
+    let expected_bytes: [u8; 8] = [0x60, 0x00, 0x6F, 0xFF, 0x67, 0x01, 0x68, 0xFE];
+
+    let memory = assemble(instructions);
+
+    assert_eq!(&memory[0..8], &expected_bytes);
+    assert_eq!(&memory[8..], &zeroed_memory()[8..]);
+  }
+
+  #[test]
+  fn test_assemble_unhandled_instruction() {
+    let instructions = vec![
+      Instruction {
+        mnemonic: "ADD".to_string(),
+        location: 0,
+        operand1: Some(Operand::Register(0)),
+        operand2: Some(Operand::Register(1)),
+      },
+      Instruction {
+        mnemonic: "LOAD".to_string(),
+        location: 2,
+        operand1: Some(Operand::Register(2)),
+        operand2: Some(Operand::Immediate(5)),
+      },
+    ];
+
+    let expected_bytes: [u8; 4] = [0x00, 0x00, 0x62, 0x05];
+
+    let memory = assemble(instructions);
+
+    assert_eq!(&memory[0..4], &expected_bytes);
+    assert_eq!(&memory[4..], &zeroed_memory()[4..]);
   }
 }

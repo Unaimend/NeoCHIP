@@ -122,7 +122,7 @@ pub fn process_parse_tree(pairs: Pairs<Rule>) -> Result<Vec<Instruction>, String
     let instruction = match statement_type_pair.as_rule() {
       Rule::STMT_REG => {
         // Format: REGISTER_KEYWORD WHITESPACE REGISTER WHITESPACE REGISTER EOL
-        // Example string: "STO R1 R2"
+        // Example string: "STYX R1 R2"
         let parts: Vec<&str> = statement_str.split_whitespace().collect();
         if parts.len() != 3 {
           return Err(format!(
@@ -234,7 +234,7 @@ LOAD R5 5
 LOAD R6 1
 SUB R5 R6
 loop:
-LOAD R3 R0
+STYX R3 R0
 ADD R0 R1
 LOAD R1 R3
 STYX R5 R1
@@ -462,7 +462,6 @@ mod tests {
     };
   }
 
-  test_keyword!(test_load, "LOAD");
   test_keyword!(test_add, "ADD");
   test_keyword!(test_sub, "SUB");
   test_keyword!(test_styx, "STYX");
@@ -500,20 +499,20 @@ mod tests {
 
   #[test]
   fn test_stmt_load_r1_r2() {
-    let p = AssemblerParser::parse(Rule::STMT, "LOAD R1 R2\n").expect("Parse failed");
-    assert_eq!(p.as_str(), "LOAD R1 R2\n");
+    let p = AssemblerParser::parse(Rule::STMT, "STYX R1 R2\n").expect("Parse failed");
+    assert_eq!(p.as_str(), "STYX R1 R2\n");
   }
 
   #[test]
   fn test_stmt_load_r3_r2() {
-    let p = AssemblerParser::parse(Rule::STMT, "LOAD R3 R2\n").expect("Parse failed");
-    assert_eq!(p.as_str(), "LOAD R3 R2\n");
+    let p = AssemblerParser::parse(Rule::STMT, "STYX R3 R2\n").expect("Parse failed");
+    assert_eq!(p.as_str(), "STYX R3 R2\n");
   }
 
   #[test]
   fn test_stmt_load_r9_r8() {
-    let p = AssemblerParser::parse(Rule::STMT, "LOAD R9 R8\n").expect("Parse failed");
-    assert_eq!(p.as_str(), "LOAD R9 R8\n");
+    let p = AssemblerParser::parse(Rule::STMT, "STYX R9 R8\n").expect("Parse failed");
+    assert_eq!(p.as_str(), "STYX R9 R8\n");
   }
 
   #[test]
@@ -536,8 +535,8 @@ mod tests {
 
   #[test]
   fn test_stmt_load_r10_r8() {
-    let p = AssemblerParser::parse(Rule::STMT, "LOAD R10 R8\n").expect("Parse failed");
-    assert_eq!(p.as_str(), "LOAD R10 R8\n");
+    let p = AssemblerParser::parse(Rule::STMT, "STYX R10 R8\n").expect("Parse failed");
+    assert_eq!(p.as_str(), "STYX R10 R8\n");
   }
 
   #[test]
@@ -589,12 +588,12 @@ mod tests {
   }
 
   // Placeholder for external string
-  const FIB_PROG: &str = "LOAD R10 R8\nSTO R10 R8\n"; // Replace with actual `fibonacci_program_no_comments_asm`
+  const FIB_PROG: &str = "STYX R10 R8\nSTYX R10 R8\n"; // Replace with actual `fibonacci_program_no_comments_asm`
 
   #[test]
   fn test_stmt_multiple() {
     let p = AssemblerParser::parse(Rule::STMT, FIB_PROG).expect("Parse failed");
-    assert_eq!(p.as_str(), "LOAD R10 R8\n");
+    assert_eq!(p.as_str(), "STYX R10 R8\n");
   }
 
   #[test]
@@ -624,10 +623,10 @@ LOAD R5 5
 LOAD R6 1
 SUB R5 R6
 loop:
-LOAD R3 R0
+STYX R3 R0
 ADD R0 R1
-LOAD R1 R3
-STYX R5 R1
+STYX R1 R3
+CMP R5 0
 JMP loop
 "#;
 
