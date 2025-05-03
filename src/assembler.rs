@@ -12,7 +12,7 @@ use pest_derive::Parser;
 fn assemble(instructions: Vec<Instruction>) -> [u8; 4096] {
   println!("Successfully extracted instructions:");
   let mut mem = [0u8; 4096];
-  let instr_ctr: usize = 0;
+  let mut instr_ctr: usize = 0;
   for instr in instructions {
     println!("{instr:?}");
     match instr {
@@ -24,7 +24,7 @@ fn assemble(instructions: Vec<Instruction>) -> [u8; 4096] {
       } if mnemonic == "LOAD" => match (operand1, operand2) {
         (Some(Operand::Register(r1)), Some(Operand::Immediate(i2))) => {
           mem[instr_ctr] = 0x60 | r1;
-          mem[instr_ctr + 1] = i2;
+          mem[instr_ctr+1] =  i2;
         }
         (_, _) => {}
       },
@@ -37,6 +37,7 @@ fn assemble(instructions: Vec<Instruction>) -> [u8; 4096] {
         eprintln!("Error: Unknown instruction mnemonic: {mnemonic:?}");
       }
     }
+    instr_ctr += 2;
   }
   mem
 }
@@ -64,7 +65,7 @@ JMP loop
       match process_parse_tree(pairs) {
         Ok(instructions) => {
           let binary_code = assemble(instructions);
-          for i in 0..50 {
+          for i in (0..20).step_by(2) {
             println!("{:02X} {:02X}", binary_code[i], binary_code[i + 1]);
           }
         }
