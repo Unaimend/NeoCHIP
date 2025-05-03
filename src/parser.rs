@@ -18,17 +18,17 @@ use std::str::FromStr; // Needed for parse::<T>()
 
 // Define data structures to represent your instructions
 #[derive(Debug)]
-struct Instruction {
-  mnemonic: String,
-  location: u16,
-  operand1: Option<Operand>,
-  operand2: Option<Operand>,
+pub struct Instruction {
+  pub mnemonic: String,
+  pub location: u16,
+  pub operand1: Option<Operand>,
+  pub operand2: Option<Operand>,
 }
 
 #[derive(Debug)]
-enum Operand {
+pub enum Operand {
   Register(u8),
-  Immediate(i32), // Use i32 for potentially signed numbers from your 'number' rule
+  Immediate(u8), // Use i32 for potentially signed numbers from your 'number' rule
   Address(u16),
   Label(String),
 }
@@ -66,7 +66,7 @@ fn parse_address(addr_str: &str) -> Result<u16, String> {
 
 // --- Main function to process the parse tree ---
 
-fn process_parse_tree(pairs: Pairs<Rule>) -> Result<Vec<Instruction>, String> {
+pub fn process_parse_tree(pairs: Pairs<Rule>) -> Result<Vec<Instruction>, String> {
   let mut location: u16 = 0;
   let mut instructions: Vec<Instruction> = Vec::new();
 
@@ -90,7 +90,7 @@ fn process_parse_tree(pairs: Pairs<Rule>) -> Result<Vec<Instruction>, String> {
   let statement_pairs = program_pair.into_inner();
 
   for stmt_pair in statement_pairs {
-    println!("stmt_pair: {:?}", stmt_pair.as_str());
+    //println!("stmt_pair: {:?}", stmt_pair.as_str());
     // Each inner pair of PROGRAM should be a STMT rule based on your grammar PROGRAM = {(STMT)+}
     // If your PROGRAM rule allowed other things like EOL or WHITESPACE directly, you'd check here
     if stmt_pair.as_rule() != Rule::STMT {
@@ -155,7 +155,7 @@ fn process_parse_tree(pairs: Pairs<Rule>) -> Result<Vec<Instruction>, String> {
           mnemonic,
           location,
           operand1: Some(Operand::Register(reg)),
-          operand2: Some(Operand::Immediate(immediate)),
+          operand2: Some(Operand::Immediate(immediate.try_into().unwrap())),
         }
       }
       Rule::STMT_ADDR => {
@@ -203,7 +203,6 @@ fn process_parse_tree(pairs: Pairs<Rule>) -> Result<Vec<Instruction>, String> {
           ));
         }
         let mnemonic = parts[0].to_string();
-        println!("label: {mnemonic}");
         // This does not get translated into byte code
         location -= 2;
         Instruction {
@@ -486,6 +485,11 @@ mod tests {
     let p = AssemblerParser::parse(Rule::LABEL_USE, "label").expect("Parse failed");
     assert_eq!(p.as_str(), "label");
   }
+  //TODO
+  /*STMT_REG = @{ REGISTER_KEYWORD ~ WHITESPACE ~ REGISTER ~ WHITESPACE ~ REGISTER ~ EOL }
+  STMT_IM = @{("LOAD" | "CMP") ~ WHITESPACE ~ REGISTER ~ WHITESPACE ~ number ~ EOL }
+  STMT_ADDR = @{("JMP") ~ WHITESPACE ~  address ~ EOL}
+  STMT_LABEL = @{("JMP") ~ WHITESPACE ~  LABEL_USE ~ EOL}*/
 
   /////// RANDOM TESTS/////////////
   #[test]

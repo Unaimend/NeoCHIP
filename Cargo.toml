@@ -16,3 +16,8 @@ path = "src/emulator.rs"
 [[bin]]
 name = "parser"
 path = "src/parser.rs"
+
+
+[[bin]]
+name = "assembler"
+path = "src/assembler.rs"
