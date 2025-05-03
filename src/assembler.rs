@@ -26,10 +26,25 @@ fn assemble(instructions: Vec<Instruction>) -> [u8; 4096] {
           mem[instr_ctr] = 0x60 | r1;
           mem[instr_ctr + 1] = i2;
         }
-        (Some(Operand::Register(r1)), Some(Operand::Register(r2))) => {
-          todo!("Needs to be removed")
+        (_, _) => {
+          eprintln!("Error: Invalid LOAD instruction");
+          panic!();
         }
-        (_, _) => {}
+      },
+      Instruction {
+        ref mnemonic,
+        location,
+        operand1,
+        operand2,
+      } if mnemonic == "STYX" => match (operand1, operand2) {
+        (Some(Operand::Register(r1)), Some(Operand::Register(r2))) => {
+          mem[instr_ctr] = 0x80 | r1;
+          mem[instr_ctr + 1] = (r2 << 4);
+        }
+        (_, _) => {
+          eprintln!("Error: Invalid LOAD instruction");
+          panic!();
+        }
       },
       Instruction {
         ref mnemonic,
@@ -52,10 +67,10 @@ LOAD R5 5
 LOAD R6 1
 SUB R5 R6
 loop:
-LOAD R3 R0
+STYX R3 R0
 ADD R0 R1
-LOAD R1 R3
-STYX R5 R1
+STYX R1 R3
+CMP R5 0
 JMP loop
     "#;
 
