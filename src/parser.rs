@@ -468,6 +468,25 @@ mod tests {
   test_keyword!(test_sub, "SUB");
   test_keyword!(test_styx, "STYX");
 
+  #[test]
+  fn test_label_dec() {
+    let p = AssemblerParser::parse(Rule::LABEL_DEC, "label:\n").expect("Parse failed");
+    assert_eq!(p.as_str(), "label:\n");
+  }
+
+  #[test]
+  #[should_panic]
+  fn test_label_needs_newline() {
+    let _p = AssemblerParser::parse(Rule::LABEL_DEC, "label:").expect("Parse failed");
+    panic!();
+  }
+
+  #[test]
+  fn test_label_use() {
+    let p = AssemblerParser::parse(Rule::LABEL_USE, "label").expect("Parse failed");
+    assert_eq!(p.as_str(), "label");
+  }
+
   /////// RANDOM TESTS/////////////
   #[test]
   fn test_stmt_reg_sto_r1_r2_crlf() {
