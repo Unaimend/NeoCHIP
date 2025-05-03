@@ -24,7 +24,7 @@ fn assemble(instructions: Vec<Instruction>) -> [u8; 4096] {
       } if mnemonic == "LOAD" => match (operand1, operand2) {
         (Some(Operand::Register(r1)), Some(Operand::Immediate(i2))) => {
           mem[instr_ctr] = 0x60 | r1;
-          mem[instr_ctr+1] =  i2;
+          mem[instr_ctr + 1] = i2;
         }
         (_, _) => {}
       },
