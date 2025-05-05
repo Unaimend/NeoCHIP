@@ -51,6 +51,22 @@ fn assemble(instructions: Vec<Instruction>) -> [u8; 4096] {
         location,
         operand1,
         operand2,
+      } if mnemonic == "ADD" => match (operand1, operand2) {
+        (Some(Operand::Register(r1)), Some(Operand::Register(r2))) => {
+          mem[instr_ctr] = 0x80 | r1;
+          mem[instr_ctr + 1] = (r2 << 4) | 0x4;
+        }
+        (_, _) => {
+          eprintln!("Error: Invalid ADD instruction");
+          panic!();
+        }
+      },
+
+      Instruction {
+        ref mnemonic,
+        location,
+        operand1,
+        operand2,
       } => {
         eprintln!("Error: Unknown instruction mnemonic: {mnemonic:?}");
       }
@@ -61,17 +77,21 @@ fn assemble(instructions: Vec<Instruction>) -> [u8; 4096] {
 }
 
 fn main() {
-  let fibonacci_program_no_comments_asm = r#"LOAD R0 1
-LOAD R1 1
-LOAD R5 5
+  //  let fibonacci_program_no_comments_asm = r#"LOAD R0 1
+  //LOAD R1 1
+  //LOAD R5 5
+  //LOAD R6 1
+  //SUB R5 R6
+  //loop:
+  //STYX R3 R0
+  //ADD R0 R1
+  //STYX R1 R3
+  //CMP R5 0
+  //JMP loop
+  //    "#;
+  let fibonacci_program_no_comments_asm = r#"LOAD R5 1
 LOAD R6 1
-SUB R5 R6
-loop:
-STYX R3 R0
-ADD R0 R1
-STYX R1 R3
-CMP R5 0
-JMP loop
+ADD R5 R6
     "#;
 
   let parse_result = AssemblerParser::parse(Rule::PROGRAM, fibonacci_program_no_comments_asm);
@@ -190,7 +210,7 @@ mod tests {
   fn test_assemble_unhandled_instruction() {
     let instructions = vec![
       Instruction {
-        mnemonic: "ADD".to_string(),
+        mnemonic: "NOP".to_string(),
         location: 0,
         operand1: Some(Operand::Register(0)),
         operand2: Some(Operand::Register(1)),
@@ -209,5 +229,23 @@ mod tests {
 
     assert_eq!(&memory[0..4], &expected_bytes);
     assert_eq!(&memory[4..], &zeroed_memory()[4..]);
+  }
+
+  #[test]
+  fn test_assemble_add() {
+    let instructions = vec![Instruction {
+      mnemonic: "ADD".to_string(),
+      location: 0,
+      operand1: Some(Operand::Register(6)),
+      operand2: Some(Operand::Register(2)),
+    }];
+
+    let expected_bytes: [u8; 2] = [0x86, 0x24];
+
+    let memory = assemble(instructions);
+
+    assert_eq!(&memory[0..2], &expected_bytes);
+
+    assert_eq!(&memory[2..], &zeroed_memory()[2..]);
   }
 }
