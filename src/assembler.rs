@@ -5,9 +5,48 @@ use self::parser::{Instruction, process_parse_tree};
 use self::parser::AssemblerParser;
 use self::parser::Operand;
 use self::parser::Rule;
-
 use pest::Parser;
 use pest_derive::Parser;
+use std::collections::HashMap;
+fn resolve_label(mut instructions: Vec<Instruction>) -> Vec<Instruction> {
+  let mut labels: HashMap<String, usize> = HashMap::new();
+
+  for instr in &instructions {
+    // Must be a label
+    if instr.mnemonic.ends_with(":") {
+      let label = instr.mnemonic.trim_end_matches(":");
+      labels.insert(label.to_string(), instr.location.into());
+    }
+  }
+
+  for instr in instructions.iter_mut() {
+    match instr {
+      Instruction {
+        mnemonic,
+        location: _,
+        operand1,
+        operand2,
+      } if mnemonic == "JMP" => match (operand1, operand2) {
+        (Some(Operand::Label(l1)), _) => {
+          instr.operand1 = Some(Operand::Address(labels[l1] as u16));
+        }
+        (_, _) => {
+          eprintln!("Error: Invalid SUB instruction");
+          panic!();
+        }
+      },
+
+      Instruction {
+        mnemonic,
+        location: _,
+        operand1,
+        operand2,
+      } => {}
+    }
+  }
+
+  instructions
+}
 
 fn assemble(instructions: Vec<Instruction>) -> [u8; 4096] {
   println!("Successfully extracted instructions:");
@@ -81,6 +120,36 @@ fn assemble(instructions: Vec<Instruction>) -> [u8; 4096] {
         location: _,
         operand1,
         operand2,
+      } if mnemonic == "CMP" => match (operand1, operand2) {
+        (Some(Operand::Register(r1)), Some(Operand::Immediate(i2))) => {
+          mem[instr_ctr] = 0x30 | r1;
+          mem[instr_ctr + 1] = i2 << 4;
+        }
+        (_, _) => {
+          eprintln!("Error: Invalid CMP instruction");
+          panic!();
+        }
+      },
+      Instruction {
+        ref mnemonic,
+        location: _,
+        operand1,
+        operand2,
+      } if mnemonic == "JMP" => match (operand1, operand2) {
+        (Some(Operand::Address(r1)), _) => {
+          mem[instr_ctr] = 0x10 | ((r1 >> 8) & 0x000F) as u8;
+          mem[instr_ctr + 1] = (r1 & 0x00FF) as u8;
+        }
+        (_, _) => {
+          eprintln!("Error: Invalid JMP instruction");
+          panic!();
+        }
+      },
+      Instruction {
+        ref mnemonic,
+        location: _,
+        operand1,
+        operand2,
       } if mnemonic.ends_with(":") => {
         // Labels are saved in the instruction list, for each instr. we inc. the instr_ctr but
         // labels are fake instructions that are not parsed into bytes so we need to subtract 2
@@ -88,11 +157,11 @@ fn assemble(instructions: Vec<Instruction>) -> [u8; 4096] {
       }
       Instruction {
         ref mnemonic,
-        location,
-        operand1,
-        operand2,
+        ref location,
+        ref operand1,
+        ref operand2,
       } => {
-        eprintln!("Error: Unknown instruction mnemonic: {mnemonic:?}");
+        eprintln!("Error: Unknown instruction instr.: {instr:?}");
       }
     }
     instr_ctr += 2;
@@ -125,7 +194,10 @@ fn main() {
       println!("Parse successful. Processing tree...");
       // Process the parse tree
       match process_parse_tree(pairs) {
-        Ok(instructions) => {
+        Ok(mut instructions) => {
+          println!("{:?}", instructions);
+          instructions = resolve_label(instructions);
+          println!("{:?}", instructions);
           let binary_code = assemble(instructions);
           for i in (0..20).step_by(2) {
             println!("{:02X} {:02X}", binary_code[i], binary_code[i + 1]);
