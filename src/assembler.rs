@@ -18,7 +18,7 @@ fn assemble(instructions: Vec<Instruction>) -> [u8; 4096] {
     match instr {
       Instruction {
         ref mnemonic,
-        location,
+        location: _,
         operand1,
         operand2,
       } if mnemonic == "LOAD" => match (operand1, operand2) {
@@ -33,7 +33,7 @@ fn assemble(instructions: Vec<Instruction>) -> [u8; 4096] {
       },
       Instruction {
         ref mnemonic,
-        location,
+        location: _,
         operand1,
         operand2,
       } if mnemonic == "STYX" => match (operand1, operand2) {
@@ -48,7 +48,7 @@ fn assemble(instructions: Vec<Instruction>) -> [u8; 4096] {
       },
       Instruction {
         ref mnemonic,
-        location,
+        location: _,
         operand1,
         operand2,
       } if mnemonic == "ADD" => match (operand1, operand2) {
@@ -61,7 +61,31 @@ fn assemble(instructions: Vec<Instruction>) -> [u8; 4096] {
           panic!();
         }
       },
-
+      Instruction {
+        ref mnemonic,
+        location: _,
+        operand1,
+        operand2,
+      } if mnemonic == "SUB" => match (operand1, operand2) {
+        (Some(Operand::Register(r1)), Some(Operand::Register(r2))) => {
+          mem[instr_ctr] = 0x80 | r1;
+          mem[instr_ctr + 1] = (r2 << 4) | 0x5;
+        }
+        (_, _) => {
+          eprintln!("Error: Invalid SUB instruction");
+          panic!();
+        }
+      },
+      Instruction {
+        ref mnemonic,
+        location: _,
+        operand1,
+        operand2,
+      } if mnemonic.ends_with(":") => {
+        // Labels are saved in the instruction list, for each instr. we inc. the instr_ctr but
+        // labels are fake instructions that are not parsed into bytes so we need to subtract 2
+        instr_ctr -= 2;
+      }
       Instruction {
         ref mnemonic,
         location,
@@ -77,22 +101,22 @@ fn assemble(instructions: Vec<Instruction>) -> [u8; 4096] {
 }
 
 fn main() {
-  //  let fibonacci_program_no_comments_asm = r#"LOAD R0 1
-  //LOAD R1 1
-  //LOAD R5 5
+  let fibonacci_program_no_comments_asm = r#"LOAD R0 1
+  LOAD R1 1
+  LOAD R5 5
+  LOAD R6 1
+  SUB R5 R6
+  loop:
+  STYX R3 R0
+  ADD R0 R1
+  STYX R1 R3
+  CMP R5 0
+  JMP loop
+      "#;
+  //  let fibonacci_program_no_comments_asm = r#"LOAD R5 1
   //LOAD R6 1
-  //SUB R5 R6
-  //loop:
-  //STYX R3 R0
-  //ADD R0 R1
-  //STYX R1 R3
-  //CMP R5 0
-  //JMP loop
+  //ADD R5 R6
   //    "#;
-  let fibonacci_program_no_comments_asm = r#"LOAD R5 1
-LOAD R6 1
-ADD R5 R6
-    "#;
 
   let parse_result = AssemblerParser::parse(Rule::PROGRAM, fibonacci_program_no_comments_asm);
 
@@ -241,6 +265,24 @@ mod tests {
     }];
 
     let expected_bytes: [u8; 2] = [0x86, 0x24];
+
+    let memory = assemble(instructions);
+
+    assert_eq!(&memory[0..2], &expected_bytes);
+
+    assert_eq!(&memory[2..], &zeroed_memory()[2..]);
+  }
+
+  #[test]
+  fn test_assemble_sub() {
+    let instructions = vec![Instruction {
+      mnemonic: "SUB".to_string(),
+      location: 0,
+      operand1: Some(Operand::Register(6)),
+      operand2: Some(Operand::Register(2)),
+    }];
+
+    let expected_bytes: [u8; 2] = [0x86, 0x25];
 
     let memory = assemble(instructions);
 
