@@ -1,14 +1,11 @@
-mod parser;
+use crate::parser::AssemblerParser;
+use crate::parser::Operand;
+use crate::parser::Rule;
+use crate::parser::{Instruction, process_parse_tree};
 
-use self::parser::{Instruction, process_parse_tree};
-
-use self::parser::AssemblerParser;
-use self::parser::Operand;
-use self::parser::Rule;
-use pest::Parser;
-use pest_derive::Parser;
 use std::collections::HashMap;
-fn resolve_label(mut instructions: Vec<Instruction>) -> Vec<Instruction> {
+
+pub fn resolve_label(mut instructions: Vec<Instruction>) -> Vec<Instruction> {
   let mut labels: HashMap<String, usize> = HashMap::new();
 
   for instr in &instructions {
@@ -48,7 +45,7 @@ fn resolve_label(mut instructions: Vec<Instruction>) -> Vec<Instruction> {
   instructions
 }
 
-fn assemble(instructions: Vec<Instruction>) -> [u8; 4096] {
+pub fn assemble(instructions: Vec<Instruction>) -> [u8; 4096] {
   println!("Successfully extracted instructions:");
   let mut mem = [0u8; 4096];
   let mut instr_ctr: usize = 0;
@@ -167,51 +164,6 @@ fn assemble(instructions: Vec<Instruction>) -> [u8; 4096] {
     instr_ctr += 2;
   }
   mem
-}
-
-fn main() {
-  let fibonacci_program_no_comments_asm = r#"LOAD R0 1
-  LOAD R1 1
-  LOAD R5 5
-  LOAD R6 1
-  SUB R5 R6
-  loop:
-  STYX R3 R0
-  ADD R0 R1
-  STYX R1 R3
-  CMP R5 0
-  JMP loop
-      "#;
-  //  let fibonacci_program_no_comments_asm = r#"LOAD R5 1
-  //LOAD R6 1
-  //ADD R5 R6
-  //    "#;
-
-  let parse_result = AssemblerParser::parse(Rule::PROGRAM, fibonacci_program_no_comments_asm);
-
-  match parse_result {
-    Ok(pairs) => {
-      println!("Parse successful. Processing tree...");
-      // Process the parse tree
-      match process_parse_tree(pairs) {
-        Ok(mut instructions) => {
-          println!("{:?}", instructions);
-          instructions = resolve_label(instructions);
-          println!("{:?}", instructions);
-          let binary_code = assemble(instructions);
-          for i in (0..20).step_by(2) {
-            println!("{:02X} {:02X}", binary_code[i], binary_code[i + 1]);
-          }
-        }
-        Err(e) => {
-          eprintln!("Error processing parse tree: {e}");
-        }
-      }
-    }
-    Err(e) => {
-      eprintln!("Parse error: {e}");
-    }
-  }
 }
 
 #[cfg(test)]

@@ -27,16 +27,16 @@ fn main() {
 
   println!("{:?}", cpu.memory);
 }
-struct CPU {
+pub struct CPU {
   // If position_in_memory is > 0x1000 we have a problem.
-  position_in_memory: usize,
-  registers: [u8; 16],
-  register_i: u16,
+  pub position_in_memory: usize,
+  pub registers: [u8; 16],
+  pub register_i: u16,
   // We do not reserer 512 bytes for the system
-  memory: [u8; 0x1000],
-  stack: [u16; 16],
+  pub memory: [u8; 0x1000],
+  pub stack: [u16; 16],
   // allows us to panick the stack
-  stack_pointer: usize,
+  pub stack_pointer: usize,
 }
 
 impl CPU {
@@ -61,6 +61,7 @@ impl CPU {
   }
   fn step(&mut self) -> i32 {
     let opcode = self.read_opcode();
+    // We can advance the program couter because we read an instruction
     self.position_in_memory += 2;
     // Extract 4Bit and shit to lowest pos.
     let c = ((opcode & 0xF000) >> 12) as u8;
@@ -101,7 +102,7 @@ impl CPU {
     1
   }
 
-  fn run(&mut self) {
+  pub fn run(&mut self) {
     loop {
       if self.step() == 0 {
         break;

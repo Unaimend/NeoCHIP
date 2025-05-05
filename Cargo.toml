@@ -7,17 +7,7 @@ edition = "2024"
 pest = "2.6"
 pest_derive = "2.6"
 
-
 [[bin]]
-name = "emulator"
-path = "src/emulator.rs"
+name = "cl"
+path = "src/main.rs"
 
-
-[[bin]]
-name = "parser"
-path = "src/parser.rs"
-
-
-[[bin]]
-name = "assembler"
-path = "src/assembler.rs"
