@@ -148,18 +148,18 @@ fn assemble(instructions: Vec<Instruction>) -> [u8; 4096] {
       Instruction {
         ref mnemonic,
         location: _,
-        operand1,
-        operand2,
+        operand1: _,
+        operand2: _,
       } if mnemonic.ends_with(":") => {
         // Labels are saved in the instruction list, for each instr. we inc. the instr_ctr but
         // labels are fake instructions that are not parsed into bytes so we need to subtract 2
         instr_ctr -= 2;
       }
       Instruction {
-        ref mnemonic,
-        ref location,
-        ref operand1,
-        ref operand2,
+        mnemonic: ref _ign,
+        location: ref _ign2,
+        operand1: ref _ign3,
+        operand2: ref _ign4,
       } => {
         eprintln!("Error: Unknown instruction instr.: {instr:?}");
       }
@@ -361,5 +361,93 @@ mod tests {
     assert_eq!(&memory[0..2], &expected_bytes);
 
     assert_eq!(&memory[2..], &zeroed_memory()[2..]);
+  }
+
+  #[test]
+  fn test_fib() {
+    let instructions = vec![
+      Instruction {
+        mnemonic: "LOAD".to_string(),
+        location: 0,
+        operand1: Some(Operand::Register(0)),
+        operand2: Some(Operand::Immediate(1)),
+      },
+      Instruction {
+        mnemonic: "LOAD".to_string(),
+        location: 1,
+        operand1: Some(Operand::Register(1)),
+        operand2: Some(Operand::Immediate(1)),
+      },
+      Instruction {
+        mnemonic: "LOAD".to_string(),
+        location: 2,
+        operand1: Some(Operand::Register(5)),
+        operand2: Some(Operand::Immediate(5)),
+      },
+      Instruction {
+        mnemonic: "LOAD".to_string(),
+        location: 3,
+        operand1: Some(Operand::Register(6)),
+        operand2: Some(Operand::Immediate(1)),
+      },
+      Instruction {
+        mnemonic: "SUB".to_string(),
+        location: 4,
+        operand1: Some(Operand::Register(5)),
+        operand2: Some(Operand::Register(6)),
+      },
+      // loop label is ignored in instruction structure unless label support is added
+      Instruction {
+        mnemonic: "STYX".to_string(),
+        location: 5,
+        operand1: Some(Operand::Register(3)),
+        operand2: Some(Operand::Register(0)),
+      },
+      Instruction {
+        mnemonic: "ADD".to_string(),
+        location: 6,
+        operand1: Some(Operand::Register(0)),
+        operand2: Some(Operand::Register(1)),
+      },
+      Instruction {
+        mnemonic: "STYX".to_string(),
+        location: 7,
+        operand1: Some(Operand::Register(1)),
+        operand2: Some(Operand::Register(3)),
+      },
+      Instruction {
+        mnemonic: "CMP".to_string(),
+        location: 8,
+        operand1: Some(Operand::Register(5)),
+        operand2: Some(Operand::Immediate(0)),
+      },
+      Instruction {
+        mnemonic: "JMP".to_string(),
+        location: 9,
+        operand1: Some(Operand::Address(8)),
+        operand2: None,
+      },
+    ];
+    const LEN: usize = 22;
+    let expected_bytes: [u8; LEN] = [
+      // Main program (starts at 0x200)
+      0x60, 0x01, // 0x002: LD V0, 0x01
+      0x61, 0x01, // 0x004: LD V1, 0x01
+      0x65, 0x05, // 0x006: LD V5, 0x05
+      0x66, 0x01, // 0x008: LD V6, 0x01
+      0x85, 0x65, // 0x00A: V5 <- V5 - V6 // Decrement counter
+      0x83, 0x00, //      : V3 <- V0 (STYX V3 V0)      // Save f_n+1
+      0x80, 0x14, // 0x00C: ADD V0, V1
+      0x81, 0x30, //      : V1 <- V3 (STYX V3 V1)
+      0x35, 0x00, //      : V5 == 0;
+      0x10, 0x08, // JMP 0x008
+      0x00, 0x00,
+    ];
+
+    let memory = assemble(instructions);
+
+    assert_eq!(&memory[0..LEN], &expected_bytes);
+
+    assert_eq!(&memory[LEN..], &zeroed_memory()[LEN..]);
   }
 }
