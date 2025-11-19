@@ -1,16 +1,18 @@
-
 REGISTER = @{ "R" ~ ( "1" ~ '0'..'5' | '0'..'9' ) }
 REGISTER_KEYWORD = {"ADD" | "SUB" | "STYX"}
 
-PROGRAM = {(STMT)+}
+PROGRAM = {(COMMENT | WHITESPACE)* ~ (STMT ~ (COMMENT | WHITESPACE)*)+}
+COMMENT = {";" ~ (!EOL ~ ANY)*}
+STMT = { STMT_REG | STMT_IM | STMT_ADDR | STMT_LABEL | LABEL_DEC}
 
-STMT = { STMT_REG | STMT_IM | STMT_ADDR | STMT_LABEL | LABEL_DEC} 
 LABEL_DEC = @{ASCII_ALPHA+ ~ ":" ~ EOL}
 LABEL_USE = @{ASCII_ALPHA+}
-STMT_REG = @{ REGISTER_KEYWORD ~ WHITESPACE ~ REGISTER ~ WHITESPACE ~ REGISTER ~ EOL }
-STMT_IM = @{("LOAD" | "CMP") ~ WHITESPACE ~ REGISTER ~ WHITESPACE ~ number ~ EOL }
-STMT_ADDR = @{("JMP") ~ WHITESPACE ~  address ~ EOL}
-STMT_LABEL = @{("JMP") ~ WHITESPACE ~  LABEL_USE ~ EOL}
+
+STMT_REG = @{ REGISTER_KEYWORD ~ WHITESPACE ~ REGISTER ~ WHITESPACE ~ REGISTER ~ WHITESPACE? ~ COMMENT? ~ EOL }
+STMT_IM = @{("LOAD" | "CMP") ~ WHITESPACE ~ REGISTER ~ WHITESPACE ~ number ~ WHITESPACE? ~ COMMENT? ~ EOL }
+STMT_ADDR = @{("JMP") ~ WHITESPACE ~  address ~ WHITESPACE? ~ COMMENT? ~ EOL}
+STMT_LABEL = @{("JMP") ~ WHITESPACE ~  LABEL_USE ~ WHITESPACE? ~ COMMENT? ~ EOL}
+
 EOL = {("\r\n" | NEWLINE)}
 
 WHITESPACE = _{ " " | "\t" }
@@ -29,11 +31,11 @@ positive = {
 }
 
 address = @{
-    "4096"                      // Matches the exact upper bound
-  | "409" ~ '0'..'5'            // Matches 4090 to 4095
-  | "40" ~ '0'..'8' ~ '0'..'9'  // Matches 4000 to 4089
-  | '1'..'3' ~ ASCII_DIGIT{3}   // Matches 1000 to 3999 (using built-in ASCII_DIGIT)
-  | '1'..'9' ~ ASCII_DIGIT{2}   // Matches 100 to 999
-  | '1'..'9' ~ ASCII_DIGIT      // Matches 10 to 99
-  | ASCII_DIGIT                 // Matches 0 to 9 (using built-in ASCII_DIGIT)
+    "4096"
+  | "409" ~ '0'..'5'
+  | "40" ~ '0'..'8' ~ '0'..'9'
+  | '1'..'3' ~ ASCII_DIGIT{3}
+  | '1'..'9' ~ ASCII_DIGIT{2}
+  | '1'..'9' ~ ASCII_DIGIT
+  | ASCII_DIGIT
 }

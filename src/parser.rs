@@ -108,7 +108,10 @@ pub fn process_parse_tree(pairs: Pairs<Rule>) -> Result<Vec<Instruction>, String
 
     // Now, 'statement_type_pair' is the Pair for STMT_REG, STMT_IM, or STMT_ADDR
     // Since these rules are atomic, we get the full matched string from their span
-    let statement_str = statement_type_pair.as_span().as_str().trim(); // Trim trailing EOL for easier splitting
+    let mut statement_str = statement_type_pair.as_span().as_str().trim(); // Trim trailing EOL for easier splitting
+                                                                       
+    // Remove comments
+    statement_str = statement_str.split(";").collect::<Vec<_>>()[0];
 
     // --- Process the string based on the matched statement type ---
     let instruction = match statement_type_pair.as_rule() {
@@ -610,7 +613,7 @@ mod tests {
   #[test]
   fn test_program_fibonacci() {
     let fibonacci_program_no_comments_asm = r#"LOAD R0 1
-LOAD R1 1
+LOAD R1 1 ;dwasw
 LOAD R5 5
 LOAD R6 1
 SUB R5 R6
